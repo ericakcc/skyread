@@ -1,0 +1,12 @@
+[project]
+name = "skyread"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gradio>=6.17.3",
+    "matplotlib>=3.10.9",
+    "metpy>=1.7.1",
+    "pandas>=3.0.3",
+]
