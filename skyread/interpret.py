@@ -49,7 +49,11 @@ def assess(indices: dict[str, float]) -> dict[str, str]:
     label, pro, grandma = _cape_band(indices["cape_jkg"])
 
     cin = indices["cin_jkg"]
-    if math.isnan(cin) or cin >= -25:
+    if label == "stable":
+        # With no CAPE there is nothing for the cap to hold back; talking
+        # about "convection starting easily" here reads as a contradiction.
+        cap_note = "無明顯對流潛勢"
+    elif math.isnan(cin) or cin >= -25:
         cap_note = "幾乎沒有對流抑制，對流容易啟動"
     elif cin >= -100:
         cap_note = "有中等的對流抑制（蓋子），需要日照加熱才會爆發"
@@ -119,6 +123,8 @@ def interpret_rule_based(indices: dict[str, float], name: str) -> dict[str, str]
     grandma = f"【生活版】{a['grandma_phrase']}。"
     if a["label"] in ("moderate", "strong", "extreme"):
         grandma += "出門記得帶傘，棉被先別曬，午後盡量避免在空曠處。☔"
+    elif a["label"] == "marginal":
+        grandma += "出門帶把傘以防萬一，棉被早點曬、早點收。🌦️"
     else:
         grandma += "今天適合外出，棉被可以放心曬。☀️"
     return {"pro": pro, "grandma": grandma}

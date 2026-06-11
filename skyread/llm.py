@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import threading
 from functools import lru_cache
 
 from skyread.interpret import build_grandma_prompt, interpret_rule_based
@@ -54,18 +55,29 @@ def _pick_device() -> str:  # pragma: no cover - hardware dependent
     return "cpu"
 
 
+_LOAD_LOCK = threading.Lock()
+
+
 @lru_cache(maxsize=1)
-def _load_model():  # pragma: no cover - exercised manually / on the Space
-    """Load tokenizer and model once per process."""
+def _load_model_once():  # pragma: no cover - exercised manually / on the Space
+    """Load tokenizer and model (call via :func:`_load_model`)."""
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(
-        MODEL_ID, trust_remote_code=True, torch_dtype="auto"
-    )
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_ID, dtype="auto")
     model.to(_pick_device())
     model.eval()
     return tokenizer, model
+
+
+def _load_model():  # pragma: no cover - thin thread-safety wrapper
+    """Thread-safe single load: the warm-up thread may race the first request.
+
+    ``lru_cache`` alone does not serialise concurrent first calls — two
+    threads can both miss the cache and load the model twice.
+    """
+    with _LOAD_LOCK:
+        return _load_model_once()
 
 
 def _generate(prompt: str) -> str:  # pragma: no cover - needs model weights
