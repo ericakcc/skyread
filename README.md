@@ -39,7 +39,8 @@ SkyRead 把它變成兩張卡片：給氣象同行的指數摘要，和給長輩
 - 🛰️ 即時探空：石垣島 47918 / 香港 45004 等鄰近測站（University of Wyoming
   archive；台灣本島測站未開放於該資料庫，故取距離最近者）
 - 📚 經典個案：MetPy 內建（含 1999-05-04 Oklahoma tornado outbreak）
-- 📄 上傳 CSV：`pressure,temperature,dewpoint,direction,speed`（hPa/°C/deg/kt）
+- 📄 上傳 CSV：`pressure,temperature,dewpoint,direction,speed`（hPa/°C/deg/kt），
+  範例檔在 `examples/sample_sounding.csv`
 
 ## Run locally
 
