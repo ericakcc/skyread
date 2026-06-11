@@ -12,7 +12,15 @@ from siphon.simplewebservice.wyoming import WyomingUpperAir
 
 from skyread.sounding import Sounding, from_wyoming_dataframe
 
-BANQIAO = "46692"  # Taipei / Banqiao upper-air station
+# Taiwan's own stations (Banqiao 46692, Pingtung 46810) are not published to
+# the Wyoming archive, so we offer the nearest reliably-available stations.
+STATIONS: dict[str, str] = {
+    "石垣島 47918（離台灣最近，~270km）": "47918",
+    "香港京士柏 45004": "45004",
+    "奄美名瀨 47909": "47909",
+    "日本館野 47646": "47646",
+}
+DEFAULT_STATION = "47918"
 
 _COLUMNS = ["pressure", "height", "temperature", "dewpoint", "direction", "speed"]
 
@@ -23,7 +31,7 @@ def _latest_synoptic(now: datetime) -> datetime:
     return base.replace(hour=12) if base.hour >= 12 else base.replace(hour=0)
 
 
-def latest_sounding(station: str = BANQIAO, max_lookback: int = 4) -> Sounding:
+def latest_sounding(station: str = DEFAULT_STATION, max_lookback: int = 4) -> Sounding:
     """Fetch the most recent sounding, stepping back 12 h per attempt.
 
     Args:
