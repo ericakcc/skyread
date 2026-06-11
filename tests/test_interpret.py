@@ -1,6 +1,6 @@
 """Baseline tests for the rule-based interpretation layer."""
 
-from skyread.interpret import assess, build_llm_prompt, interpret_rule_based
+from skyread.interpret import assess, build_grandma_prompt, interpret_rule_based
 
 
 def _indices(cape: float, cin: float) -> dict[str, float]:
@@ -39,14 +39,13 @@ def test_interpret_rule_based_stable_allows_sunbathing_quilt() -> None:
     assert "曬" in cards["grandma"]
 
 
-def test_build_llm_prompt_embeds_rule_based_draft() -> None:
-    prompt = build_llm_prompt(_indices(2000.0, -50.0), "test")
+def test_build_grandma_prompt_embeds_rule_based_draft() -> None:
+    prompt = build_grandma_prompt(_indices(2000.0, -50.0), "test")
     draft = interpret_rule_based(_indices(2000.0, -50.0), "test")
-    assert draft["grandma"] in prompt
+    assert draft["grandma"].removeprefix("【生活版】") in prompt
 
 
-def test_build_llm_prompt_contains_values_and_format_markers() -> None:
-    prompt = build_llm_prompt(_indices(1500.0, -30.0), "test")
-    assert "1500" in prompt
-    assert "【同行版】" in prompt
-    assert "【生活版】" in prompt
+def test_build_grandma_prompt_requests_rewrite_only() -> None:
+    prompt = build_grandma_prompt(_indices(1500.0, -30.0), "test")
+    assert "繁體中文" in prompt
+    assert "只輸出改寫後的句子" in prompt

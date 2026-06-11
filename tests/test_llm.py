@@ -1,4 +1,4 @@
-"""Tests for the MiniCPM interpretation layer (no model download needed)."""
+"""Tests for the LLM rewrite layer (no model download needed)."""
 
 import pytest
 
@@ -17,22 +17,22 @@ _INDICES = {
 }
 
 
-def test_parse_cards_extracts_both_sections() -> None:
-    text = (
-        "【同行版】CAPE 中等，午後有對流潛勢。\n【生活版】下午可能下雷陣雨，記得帶傘。"
-    )
-    cards = llm._parse_cards(text)
-    assert cards is not None
-    assert cards["pro"].startswith("【同行版】")
-    assert "帶傘" in cards["grandma"]
+def test_clean_rewrite_accepts_normal_sentence() -> None:
+    text = "「今天下午會打雷，出門帶把傘卡安心。」"
+    assert llm._clean_rewrite(text) == "今天下午會打雷，出門帶把傘卡安心。"
 
 
-def test_parse_cards_returns_none_when_sections_missing() -> None:
-    assert llm._parse_cards("今天天氣不錯") is None
+def test_clean_rewrite_rejects_instruction_echo() -> None:
+    assert llm._clean_rewrite("好的，以下是改寫後的句子：") is None
 
 
-def test_parse_cards_returns_none_when_section_empty() -> None:
-    assert llm._parse_cards("【同行版】【生活版】帶傘。") is None
+def test_clean_rewrite_rejects_empty_and_non_chinese() -> None:
+    assert llm._clean_rewrite("   ") is None
+    assert llm._clean_rewrite("Sure! Here is the sentence.") is None
+
+
+def test_clean_rewrite_rejects_overlong_output() -> None:
+    assert llm._clean_rewrite("雨" * 300) is None
 
 
 def test_interpret_llm_falls_back_when_generation_fails(
@@ -45,22 +45,22 @@ def test_interpret_llm_falls_back_when_generation_fails(
     cards, engine = llm.interpret_llm(_INDICES, "test")
     assert engine == "rule-based"
     assert cards["pro"].startswith("【同行版")
+    assert cards["grandma"].startswith("【生活版】")
 
 
-def test_interpret_llm_falls_back_when_output_unparseable(
+def test_interpret_llm_falls_back_when_output_unusable(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(llm, "_generate", lambda prompt: "嗯嗯今天天氣不錯喔")
+    monkeypatch.setattr(llm, "_generate", lambda prompt: "Here you go!")
     cards, engine = llm.interpret_llm(_INDICES, "test")
     assert engine == "rule-based"
 
 
-def test_interpret_llm_uses_model_output_when_valid(
+def test_interpret_llm_rewrites_only_grandma_card(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        llm, "_generate", lambda prompt: "【同行版】不穩定。【生活版】帶傘。"
-    )
+    monkeypatch.setattr(llm, "_generate", lambda prompt: "下午會打雷，帶傘較妥當。")
     cards, engine = llm.interpret_llm(_INDICES, "test")
     assert engine == "minicpm"
-    assert cards["grandma"] == "【生活版】帶傘。"
+    assert cards["grandma"] == "【生活版】下午會打雷，帶傘較妥當。"
+    assert cards["pro"].startswith("【同行版")  # untouched, rule-based numbers

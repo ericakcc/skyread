@@ -13,7 +13,7 @@ import gradio as gr
 from skyread.indices import compute_indices
 from skyread.interpret import interpret_rule_based
 from skyread.live import STATIONS, latest_sounding
-from skyread.llm import interpret_llm, warm_up
+from skyread.llm import MODEL_ID, interpret_llm, warm_up
 from skyread.plot import make_skewt
 from skyread.sounding import Sounding, load_csv, load_sample
 
@@ -28,8 +28,10 @@ SOURCE_LIVE = "🛰️ 即時探空（鄰近測站）"
 SOURCE_EXAMPLE = "📚 經典個案"
 SOURCE_UPLOAD = "📄 上傳 CSV"
 
+_MODEL_NAME = MODEL_ID.split("/")[-1]
 _BADGE_LLM = (
-    "🧠 判讀由 **MiniCPM4-0.5B**（本機推論）改寫；所有數值由 MetPy 確定性計算。"
+    f"🧠 生活版由 **{_MODEL_NAME}**（本機推論）改寫；"
+    "同行版與所有數值由 MetPy 確定性計算。"
 )
 _BADGE_RULE = "📐 規則式判讀（fallback）；所有數值由 MetPy 確定性計算。"
 
@@ -105,7 +107,8 @@ def build_ui() -> gr.Blocks:
                     type="filepath",
                 )
                 use_llm = gr.Checkbox(
-                    value=True, label="🧠 用 MiniCPM 白話判讀（慢幾秒，但更像人話）"
+                    value=True,
+                    label=f"🧠 用 {_MODEL_NAME} 潤飾生活版（慢幾秒，但更像人話）",
                 )
                 btn = gr.Button("判讀 ☁️", variant="primary")
             with gr.Column(scale=1):
