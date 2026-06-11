@@ -5,7 +5,7 @@ Track: **Backyard AI**
 ## 硬性要求
 - [ ] Space 建在 hackathon org 下、public、能跑
       （`hf auth login` → `hf repo create <org>/skyread --repo-type space --space-sdk gradio` → `hf upload <org>/skyread . . --repo-type space --exclude ".git/*" --exclude ".venv/*" --exclude "docs/*" --exclude "uv.lock" --exclude ".python-version"`）
-- [ ] 模型 ≤ 32B ✅（MiniCPM3-4B）
+- [ ] 模型 ≤ 32B ✅（Qwen3-0.6B）
 - [ ] Gradio app ✅
 - [ ] Demo 影片連結（腳本：video-script.md）
 - [ ] 社群貼文連結（文案：social-post.md）
@@ -25,8 +25,8 @@ Track: **Backyard AI**
 - [ ] `git tag -a hackathon-submission -m "Build Small Hackathon submission" && git push origin hackathon-submission`
 
 ## 部署備註
-- 免費 CPU Space 跑 4B 模型會慢（每次改寫可能 1–3 分鐘）。備案：
+- 預設模型已是 Qwen3-0.6B（2026-06-11 GPU 驗證後定案,MiniCPM3-4B
+  繁中品質不過關——詳見 PROGRESS.md）,免費 CPU Space 預期可跑。
+  若實測仍慢,備案：
   1. Space 設定升級 CPU Upgrade（用大會發的 $20 HF credits）
   2. 申請 ZeroGPU（org 可能有 grant）
-  3. `SKYREAD_MODEL_ID=Qwen/Qwen3-0.6B`（已驗證繁中可用，速度快 10 倍,
-     但失去 OpenBMB 贊助獎針對性——兩個都試,demo 用順的那個）
