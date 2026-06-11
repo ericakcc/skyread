@@ -26,6 +26,17 @@ MODEL_ID = os.environ.get("SKYREAD_MODEL_ID", "openbmb/MiniCPM3-4B")
 _MAX_REWRITE_CHARS = 180
 
 
+def _pick_device() -> str:  # pragma: no cover - hardware dependent
+    """Best available device: CUDA, then Apple MPS, then CPU."""
+    import torch
+
+    if torch.cuda.is_available():
+        return "cuda"
+    if torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 @lru_cache(maxsize=1)
 def _load_model():  # pragma: no cover - exercised manually / on the Space
     """Load tokenizer and model once per process."""
@@ -35,6 +46,7 @@ def _load_model():  # pragma: no cover - exercised manually / on the Space
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_ID, trust_remote_code=True, torch_dtype="auto"
     )
+    model.to(_pick_device())
     model.eval()
     return tokenizer, model
 
@@ -49,7 +61,7 @@ def _generate(prompt: str) -> str:  # pragma: no cover - needs model weights
         add_generation_prompt=True,
         return_tensors="pt",
         return_dict=True,
-    )
+    ).to(model.device)
     with torch.no_grad():
         output = model.generate(**encoded, max_new_tokens=96, do_sample=False)
     new_tokens = output[0][encoded["input_ids"].shape[1] :]
