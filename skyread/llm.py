@@ -21,9 +21,26 @@ from skyread.interpret import build_grandma_prompt, interpret_rule_based
 
 logger = logging.getLogger(__name__)
 
-MODEL_ID = os.environ.get("SKYREAD_MODEL_ID", "openbmb/MiniCPM3-4B")
+# Qwen3-0.6B: validated 100% Traditional-Chinese-clean on the GPU box
+# (MiniCPM3-4B kept slipping into Simplified on unstable-weather wording and
+# needs the old transformers 4.46 pin — see PROGRESS notes, 2026-06-11).
+MODEL_ID = os.environ.get("SKYREAD_MODEL_ID", "Qwen/Qwen3-0.6B")
 
 _MAX_REWRITE_CHARS = 180
+_MAX_ATTEMPTS = 3
+
+# High-frequency simplified-only characters: one hit means the model slipped
+# out of Traditional Chinese, so the rewrite is rejected. Shared forms that
+# are also standard in Taiwan (e.g. 后 in 皇后, 台, 干, 呆) are deliberately
+# excluded only when ambiguity is likely; the gate is biased toward rejecting,
+# since the fallback is graceful.
+_SIMPLIFIED_CHARS = frozenset(
+    "记伞来这为时说对让们个无气电视见车东转动书长门点云飞应过头实发现别样"
+    "认师问题难岁热闹风阴湿预报员变坏轻紧稳鲜盖旷阵处带备凉润闷强从众传写"
+    "决刚务医华单压历双叶号听响围国图块坚执扩扫护担拥挂损换据断显晓暂术机"
+    "杂权条极标树桥梦检楼归录忆怀态总惊惯愿凭"
+    "会还没几开关边儿学间阳雾闪温适当满离远进节随虽谢请"
+)
 
 
 def _pick_device() -> str:  # pragma: no cover - hardware dependent
@@ -52,18 +69,29 @@ def _load_model():  # pragma: no cover - exercised manually / on the Space
 
 
 def _generate(prompt: str) -> str:  # pragma: no cover - needs model weights
-    """Run one chat-formatted greedy generation and return the new text only."""
+    """Run one chat-formatted sampled generation and return the new text only.
+
+    Sampling (not greedy) on purpose: a rejected output would otherwise be
+    deterministic, making the retry loop in :func:`interpret_llm` useless.
+    """
     import torch
 
     tokenizer, model = _load_model()
     encoded = tokenizer.apply_chat_template(
         [{"role": "user", "content": prompt}],
         add_generation_prompt=True,
+        enable_thinking=False,  # Qwen3: skip <think> blocks; no-op elsewhere
         return_tensors="pt",
         return_dict=True,
     ).to(model.device)
     with torch.no_grad():
-        output = model.generate(**encoded, max_new_tokens=96, do_sample=False)
+        output = model.generate(
+            **encoded,
+            max_new_tokens=96,
+            do_sample=True,
+            temperature=0.6,
+            top_p=0.9,
+        )
     new_tokens = output[0][encoded["input_ids"].shape[1] :]
     return tokenizer.decode(new_tokens, skip_special_tokens=True)
 
@@ -77,6 +105,8 @@ def _clean_rewrite(text: str) -> str | None:
         return None  # instruction echo, not a rewrite
     if not re.search(r"[一-鿿]", line):
         return None
+    if any(char in _SIMPLIFIED_CHARS for char in line):
+        return None  # slipped into Simplified Chinese
     return line
 
 
@@ -88,15 +118,22 @@ def interpret_llm(indices: dict[str, float], name: str) -> tuple[dict[str, str],
         name: Label of the sounding.
 
     Returns:
-        ``(cards, engine)`` where ``engine`` is ``"minicpm"`` or ``"rule-based"``.
+        ``(cards, engine)`` where ``engine`` is ``"llm"`` or ``"rule-based"``.
     """
     cards = interpret_rule_based(indices, name)
+    prompt = build_grandma_prompt(indices, name)
     try:
-        raw = _generate(build_grandma_prompt(indices, name))
-        rewritten = _clean_rewrite(raw)
-        if rewritten is not None:
-            return {**cards, "grandma": "【生活版】" + rewritten}, "minicpm"
-        logger.warning("LLM rewrite unusable, falling back: %r", raw[:200])
+        for attempt in range(_MAX_ATTEMPTS):
+            raw = _generate(prompt)
+            rewritten = _clean_rewrite(raw)
+            if rewritten is not None:
+                return {**cards, "grandma": "【生活版】" + rewritten}, "llm"
+            logger.warning(
+                "LLM rewrite unusable (attempt %d/%d): %r",
+                attempt + 1,
+                _MAX_ATTEMPTS,
+                raw[:200],
+            )
     except Exception:
         logger.exception("LLM generation failed, falling back")
     return cards, "rule-based"

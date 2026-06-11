@@ -67,7 +67,7 @@ def analyze(
         cards, engine = interpret_llm(indices, snd.name)
     else:
         cards, engine = interpret_rule_based(indices, snd.name), "rule-based"
-    badge = _BADGE_LLM if engine == "minicpm" else _BADGE_RULE
+    badge = _BADGE_LLM if engine == "llm" else _BADGE_RULE
     return make_skewt(snd), cards["pro"], cards["grandma"], badge
 
 
