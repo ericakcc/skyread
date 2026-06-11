@@ -78,7 +78,7 @@ def _analyze_fast(
 
 def build_ui() -> gr.Blocks:
     """Construct the Gradio interface."""
-    with gr.Blocks(title="SkyRead 探空白話判讀器", theme=gr.themes.Soft()) as demo:
+    with gr.Blocks(title="SkyRead 探空白話判讀器") as demo:
         gr.Markdown(
             "# 🌤️ SkyRead — 探空白話判讀器\n"
             "把艱深的 Skew-T 探空圖，翻成**同行看的指數**與**阿嬤看的帶傘建議**。\n"
@@ -129,4 +129,4 @@ def build_ui() -> gr.Blocks:
 
 if __name__ == "__main__":
     threading.Thread(target=warm_up, daemon=True).start()
-    build_ui().launch()
+    build_ui().launch(theme=gr.themes.Soft())
