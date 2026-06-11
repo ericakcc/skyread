@@ -65,7 +65,11 @@ def assess(indices: dict[str, float]) -> dict[str, str]:
 
 
 def build_llm_prompt(indices: dict[str, float], name: str) -> str:
-    """Build the prompt handed to a small LLM (e.g. MiniCPM) for interpretation.
+    """Build the rewrite-style prompt handed to a small LLM (MiniCPM).
+
+    The rule-based output is embedded as a factually-correct draft; the model
+    only rewrites tone, which a 0.5B model does far more reliably than free
+    generation.
 
     Args:
         indices: Output of :func:`skyread.indices.compute_indices`.
@@ -75,15 +79,17 @@ def build_llm_prompt(indices: dict[str, float], name: str) -> str:
         A ready-to-send prompt string requesting two-audience output.
     """
     facts = "\n".join(f"- {k}: {v}" for k, v in indices.items())
+    draft = interpret_rule_based(indices, name)
     return (
         "你是一位大氣科學家。以下是某筆探空計算出的對流穩定度指數"
         f"（個案：{name}）：\n{facts}\n\n"
-        "請用繁體中文輸出兩段判讀，嚴格依據上面的數值，不要捏造：\n"
-        "【同行版】給氣象專業人員，2-3 句，點出潛勢與關鍵指數。\n"
-        "【生活版】給完全不懂氣象的長輩，1-2 句，只講今天要不要帶傘、"
-        "會不會打雷、能不能曬棉被。\n"
-        "閾值參考：K>35 雷雨頻繁；LI<-5 非常強；TT>52 多severe；"
-        "CAPE>2500 強、>4000 極端；CIN 越負代表抑制越強。"
+        "下面是一份機器草稿，數值與結論正確，但語氣生硬：\n"
+        f"{draft['pro']}\n{draft['grandma']}\n\n"
+        "請把草稿改寫得自然、口語，保留所有數值與結論，"
+        "不要新增草稿沒有的數字。嚴格依照此格式輸出（繁體中文）：\n"
+        "【同行版】2-3 句，給氣象專業人員，點出潛勢與關鍵指數。\n"
+        "【生活版】1-2 句，給完全不懂氣象的長輩，只講要不要帶傘、"
+        "會不會打雷、能不能曬棉被。"
     )
 
 
