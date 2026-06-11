@@ -110,7 +110,7 @@ def build_ui() -> gr.Blocks:
                 )
                 use_llm = gr.Checkbox(
                     value=True,
-                    label=f"🧠 用 {_MODEL_NAME} 潤飾生活版（慢幾秒，但更像人話）",
+                    label=f"🧠 用 {_MODEL_NAME} 潤飾生活版（CPU 上約半分鐘，但更像人話）",
                 )
                 btn = gr.Button("判讀 ☁️", variant="primary")
             with gr.Column(scale=1):
