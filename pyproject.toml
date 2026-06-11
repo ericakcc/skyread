@@ -1,7 +1,7 @@
 [project]
 name = "skyread"
 version = "0.1.0"
-description = "Add your description here"
+description = "Turn Skew-T soundings into plain-language weather advice — MetPy computes, a 0.5B LLM narrates"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -9,4 +9,13 @@ dependencies = [
     "matplotlib>=3.10.9",
     "metpy>=1.7.1",
     "pandas>=3.0.3",
+    "siphon>=0.10.0",
+    "torch>=2.12.0",
+    "transformers>=4.46,<4.47",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+    "ruff>=0.15.16",
 ]

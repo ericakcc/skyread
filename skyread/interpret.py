@@ -64,26 +64,27 @@ def assess(indices: dict[str, float]) -> dict[str, str]:
     }
 
 
-def build_llm_prompt(indices: dict[str, float], name: str) -> str:
-    """Build the prompt handed to a small LLM (e.g. MiniCPM) for interpretation.
+def build_grandma_prompt(indices: dict[str, float], name: str) -> str:
+    """Build the rewrite prompt handed to a small LLM for the grandma card.
+
+    The pro card is pure numbers and stays rule-based; only the layperson
+    sentence benefits from a natural-language touch. The rule-based grandma
+    line is embedded as a factually-correct draft, so the model only rewrites
+    tone — a task small models handle far more reliably than free generation.
 
     Args:
         indices: Output of :func:`skyread.indices.compute_indices`.
         name: Label of the sounding (station / case name).
 
     Returns:
-        A ready-to-send prompt string requesting two-audience output.
+        A ready-to-send prompt string requesting a single rewritten sentence.
     """
-    facts = "\n".join(f"- {k}: {v}" for k, v in indices.items())
+    draft = interpret_rule_based(indices, name)["grandma"].removeprefix("【生活版】")
     return (
-        "你是一位大氣科學家。以下是某筆探空計算出的對流穩定度指數"
-        f"（個案：{name}）：\n{facts}\n\n"
-        "請用繁體中文輸出兩段判讀，嚴格依據上面的數值，不要捏造：\n"
-        "【同行版】給氣象專業人員，2-3 句，點出潛勢與關鍵指數。\n"
-        "【生活版】給完全不懂氣象的長輩，1-2 句，只講今天要不要帶傘、"
-        "會不會打雷、能不能曬棉被。\n"
-        "閾值參考：K>35 雷雨頻繁；LI<-5 非常強；TT>52 多severe；"
-        "CAPE>2500 強、>4000 極端；CIN 越負代表抑制越強。"
+        "把這句天氣提醒改寫成更口語、更親切的說法"
+        "（繁體中文，講給長輩聽，一到兩句）：\n"
+        f"「{draft}」\n"
+        "保留原本的結論與建議，不要新增資訊。只輸出改寫後的句子。"
     )
 
 
