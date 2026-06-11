@@ -264,7 +264,7 @@ starlette==1.2.1
     #   gradio
 sympy==1.14.0
     # via torch
-tokenizers==0.22.2
+tokenizers==0.20.3
     # via transformers
 tomlkit==0.14.0
     # via gradio
@@ -276,7 +276,7 @@ tqdm==4.68.2
     #   transformers
 traitlets==5.15.1
     # via metpy
-transformers==4.57.6
+transformers==4.46.3
     # via skyread
 triton==3.7.0 ; sys_platform == 'linux'
     # via torch

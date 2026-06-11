@@ -33,7 +33,7 @@ def _load_model():  # pragma: no cover - exercised manually / on the Space
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(
-        MODEL_ID, trust_remote_code=True, dtype="auto"
+        MODEL_ID, trust_remote_code=True, torch_dtype="auto"
     )
     model.eval()
     return tokenizer, model
