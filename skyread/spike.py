@@ -7,7 +7,7 @@ Run:
 from __future__ import annotations
 
 from skyread.indices import compute_indices
-from skyread.interpret import build_llm_prompt, interpret_rule_based
+from skyread.interpret import build_grandma_prompt, interpret_rule_based
 from skyread.sounding import load_sample
 
 
@@ -22,12 +22,12 @@ def main() -> None:
         print(f"   {key:>14}: {value}")
 
     cards = interpret_rule_based(indices, snd.name)
-    print("\n## Step 2 — dual-layer cards (rule-based stand-in for the LLM):")
+    print("\n## Step 2 — dual-layer cards (rule-based draft / fallback):")
     print("   " + cards["pro"])
     print("   " + cards["grandma"])
 
-    print("\n## Step 3 — the prompt that would go to MiniCPM instead:")
-    print("   " + build_llm_prompt(indices, snd.name).replace("\n", "\n   "))
+    print("\n## Step 3 — the rewrite prompt that goes to the small LLM:")
+    print("   " + build_grandma_prompt(indices, snd.name).replace("\n", "\n   "))
 
 
 if __name__ == "__main__":

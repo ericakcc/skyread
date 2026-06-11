@@ -41,7 +41,7 @@ class Sounding:
     name: str
 
 
-def _from_wyoming_dataframe(df: pd.DataFrame, name: str) -> Sounding:
+def from_wyoming_dataframe(df: pd.DataFrame, name: str) -> Sounding:
     """Build a :class:`Sounding` from a Wyoming-style dataframe.
 
     Args:
@@ -88,7 +88,7 @@ def load_csv(path: str, name: str = "uploaded") -> Sounding:
     missing = required - set(df.columns)
     if missing:
         raise ValueError(f"CSV missing columns: {sorted(missing)}")
-    return _from_wyoming_dataframe(df[list(required)], name=name)
+    return from_wyoming_dataframe(df[list(required)], name=name)
 
 
 def load_sample(name: str = "may4_sounding.txt") -> Sounding:
@@ -104,4 +104,4 @@ def load_sample(name: str = "may4_sounding.txt") -> Sounding:
     path = get_test_data(name, as_file_obj=False)
     col_names = ["pressure", "height", "temperature", "dewpoint", "direction", "speed"]
     df = pd.read_fwf(path, skiprows=5, usecols=[0, 1, 2, 3, 6, 7], names=col_names)
-    return _from_wyoming_dataframe(df, name=name.replace("_sounding.txt", ""))
+    return from_wyoming_dataframe(df, name=name.replace("_sounding.txt", ""))
