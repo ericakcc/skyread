@@ -11,15 +11,19 @@ import matplotlib
 
 matplotlib.use("Agg")  # headless backend for server-side rendering
 
-import matplotlib.pyplot as plt  # noqa: E402
 import metpy.calc as mpcalc  # noqa: E402
+from matplotlib.figure import Figure  # noqa: E402
 from metpy.plots import SkewT  # noqa: E402
 
 from skyread.sounding import Sounding  # noqa: E402
 
 
-def make_skewt(snd: Sounding) -> plt.Figure:
+def make_skewt(snd: Sounding) -> Figure:
     """Build a Skew-T figure (temperature, dewpoint, parcel path, CAPE/CIN).
+
+    The figure is constructed directly (not via pyplot), so it is never
+    registered in pyplot's global manager — repeated requests on a long-lived
+    server would otherwise leak every figure.
 
     Args:
         snd: A parsed sounding.
@@ -27,7 +31,7 @@ def make_skewt(snd: Sounding) -> plt.Figure:
     Returns:
         A Matplotlib figure ready for display or saving.
     """
-    fig = plt.figure(figsize=(7, 8))
+    fig = Figure(figsize=(7, 8))
     skew = SkewT(fig, rotation=45)
 
     skew.plot(

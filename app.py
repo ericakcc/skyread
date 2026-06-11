@@ -9,6 +9,7 @@ from __future__ import annotations
 import threading
 
 import gradio as gr
+from matplotlib.figure import Figure
 
 from skyread.indices import compute_indices
 from skyread.interpret import interpret_rule_based
@@ -55,25 +56,26 @@ def analyze(
     example_label: str,
     uploaded: str | None,
     use_llm: bool,
-):
+) -> tuple[Figure | None, str, str, str]:
     """Run the full chain and return (figure, pro_md, grandma_md, badge_md)."""
+    # The whole chain is guarded: a CSV can parse fine yet still blow up in
+    # index computation or plotting (empty profile, increasing pressure, …).
     try:
         snd = _load_sounding(source, station_label, example_label, uploaded)
-    except Exception as exc:  # network/parse errors surface to the user
+        indices = compute_indices(snd)
+        if use_llm:
+            cards, engine = interpret_llm(indices, snd.name)
+        else:
+            cards, engine = interpret_rule_based(indices, snd.name), "rule-based"
+        badge = _BADGE_LLM if engine == "llm" else _BADGE_RULE
+        return make_skewt(snd), cards["pro"], cards["grandma"], badge
+    except Exception as exc:  # surface as a friendly message, never a crash
         return None, f"⚠️ 讀取失敗：{exc}（可改選經典個案）", "", ""
-
-    indices = compute_indices(snd)
-    if use_llm:
-        cards, engine = interpret_llm(indices, snd.name)
-    else:
-        cards, engine = interpret_rule_based(indices, snd.name), "rule-based"
-    badge = _BADGE_LLM if engine == "llm" else _BADGE_RULE
-    return make_skewt(snd), cards["pro"], cards["grandma"], badge
 
 
 def _analyze_fast(
     source: str, station_label: str, example_label: str, uploaded: str | None
-):
+) -> tuple[Figure | None, str, str, str]:
     """Instant first paint on page load: skip the LLM, show rule-based cards."""
     return analyze(source, station_label, example_label, uploaded, use_llm=False)
 
