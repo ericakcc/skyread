@@ -3,7 +3,7 @@
 Architecture note — this is where (and the *only* place) AI is load-bearing:
 
 * The numbers come from MetPy (exact, deterministic).
-* :func:`build_llm_prompt` is what we hand to a small LLM (e.g. OpenBMB MiniCPM)
+* :func:`build_llm_prompt` is what we hand to a small LLM (e.g. Qwen3-0.6B)
   to produce natural, two-audience interpretation.
 * :func:`interpret_rule_based` is a deterministic stand-in that runs today with
   no model download. It proves the data->language shape end-to-end and doubles
@@ -82,9 +82,10 @@ def build_grandma_prompt(indices: dict[str, float], name: str) -> str:
     draft = interpret_rule_based(indices, name)["grandma"].removeprefix("【生活版】")
     return (
         "把這句天氣提醒改寫成更口語、更親切的說法"
-        "（繁體中文，講給長輩聽，一到兩句）：\n"
+        "（講給長輩聽，一到兩句）：\n"
         f"「{draft}」\n"
         "保留原本的結論與建議，不要新增資訊。只輸出改寫後的句子。"
+        "全程使用臺灣慣用的繁體中文，絕對不可出現任何簡體字。"
     )
 
 
